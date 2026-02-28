@@ -1,0 +1,112 @@
+{
+  "environment": {
+    "dev": {
+      "snowflake_db_secret_name": "cdp-fdw-snowflake-dev",
+      "database": "ENT_PEOPLE_DEV_DB",
+      "role": "ENT_PEOPLE_OWNER_DEV_ROLE",
+      "dynamic_vars": {
+        "$peopledb": "ENT_PEOPLE_DEV_DB",
+        "$firmdb": "ENT_FIRM_DEV_DB",
+        "$firmrole": "ENT_FIRM_OWNER_DEV_ROLE",
+        "$peoplerole": "ENT_PEOPLE_OWNER_DEV_ROLE",
+        "$peoplebucket": "cdp-data-people-849242744489-us-east-1-dev",
+        "$gluebucket": "cdp-data-glue-849242744489-us-east-1-dev",
+        "$refdatabucket": "cdp-data-refdata-849242744489-us-east-1-dev",
+        "$knowbucket": "cdp-data-know-849242744489-us-east-1-dev",
+        "$ksrdbsecret": "cdp-ksr-know-capture-aurora-dev",
+        "$ksrprofilessecret": "cdp-ksr-profiles-aurora-dev",
+        "$ksrtrmsecret": "cdp-ksr-trm-aurora-dev",
+        "$ksrjdbcurl": "jdbc:postgresql://knowledge-capture-db-cluster.cluster-cwgu1wk5ah9w.us-east-1.rds.amazonaws.com:5432/kcr",
+        "$ksrprofilesjdbcurl": "jdbc:postgresql://aurora-profiles-cluster-postgres.cluster-cwgu1wk5ah9w.us-east-1.rds.amazonaws.com:5432/profiles",
+        "$ksrtrmjdbcurl": "jdbc:postgresql://trm.cluster-ro-cwgu1wk5ah9w.us-east-1.rds.amazonaws.com:5432/trm"
+      }
+    },
+    "qa": {
+      "snowflake_db_secret_name": "cdp-fdw-snowflake-qa",
+      "database": "ENT_PEOPLE_QA_DB",
+      "role": "ENT_PEOPLE_OWNER_QA_ROLE",
+      "dynamic_vars": {
+        "$peopledb": "ENT_PEOPLE_QA_DB",
+        "$firmdb": "ENT_FIRM_QA_DB",
+        "$firmrole": "ENT_FIRM_OWNER_QA_ROLE",
+        "$peoplerole": "ENT_PEOPLE_OWNER_QA_ROLE",
+        "$peoplebucket": "cdp-data-people-648624564125-us-east-1-qa",
+        "$gluebucket": "cdp-data-glue-648624564125-us-east-1-qa",
+        "$refdatabucket": "cdp-data-refdata-648624564125-us-east-1-qa",
+        "$knowbucket": "cdp-data-know-648624564125-us-east-1-qa",
+        "$ksrdbsecret": "cdp-ksr-know-capture-aurora-qa",
+        "$ksrprofilessecret": "cdp-ksr-profiles-aurora-qa",
+        "$ksrtrmsecret": "cdp-ksr-trm-aurora-qa",
+        "$ksrjdbcurl": "jdbc:postgresql://knowledge-capture-db-cluster.cluster-cjooqp5pw3yl.us-east-1.rds.amazonaws.com:5432/kcr",
+        "$ksrprofilesjdbcurl": "jdbc:postgresql://aurora-profiles-cluster-postgres.cluster-cjooqp5pw3yl.us-east-1.rds.amazonaws.com:5432/profiles",
+        "$ksrtrmjdbcurl": "jdbc:postgresql://trm.cluster-cjooqp5pw3yl.us-east-1.rds.amazonaws.com:5432/trm"
+      }
+    },
+    "prod": {
+      "snowflake_db_secret_name": "cdp-fdw-snowflake-prod",
+      "database": "ENT_PEOPLE_PROD_DB",
+      "role": "ENT_PEOPLE_OWNER_PROD_ROLE",
+      "dynamic_vars": {
+        "$peopledb": "ENT_PEOPLE_PROD_DB",
+        "$firmdb": "ENT_FIRM_PROD_DB",
+        "$firmrole": "ENT_FIRM_OWNER_PROD_ROLE",
+        "$peoplerole": "ENT_PEOPLE_OWNER_PROD_ROLE",
+        "$peoplebucket": "cdp-data-people-596125291709-us-east-1-prod",
+        "$gluebucket": "cdp-data-glue-596125291709-us-east-1-prod",
+        "$refdatabucket": "cdp-data-refdata-596125291709-us-east-1-prod",
+        "$knowbucket": "cdp-data-know-596125291709-us-east-1-prod",
+        "$ksrdbsecret": "cdp-ksr-know-capture-aurora-prod",
+        "$ksrprofilessecret": "cdp-ksr-profiles-aurora-prod",
+        "$ksrtrmsecret": "cdp-ksr-trm-aurora-prod",
+        "$ksrjdbcurl": "jdbc:postgresql://knowledge-capture-db-instance-replica.clmw1wuhfyzb.us-east-1.rds.amazonaws.com:5432/kcr",
+        "$ksrprofilesjdbcurl": "jdbc:postgresql://aurora-profiles-cluster-postgres.cluster-clmw1wuhfyzb.us-east-1.rds.amazonaws.com:5432/profiles",
+        "$ksrtrmjdbcurl": "jdbc:postgresql://trm.cluster-clmw1wuhfyzb.us-east-1.rds.amazonaws.com:5432/trm"
+      }
+    }
+  },
+  "control": {
+    "trm.practice_person_topic": {
+      "name": "ETL_JOB_CONTROL",
+      "type": "snowflake",
+      "connection": {
+        "sfdatabase": "$firmdb",
+        "sfrole": "$firmrole"
+      },
+      "schema": "STG",
+      "snowflake_source_name": "net.snowflake.spark.snowflake",
+      "procname": "UPDATE_ETL_JOB_CONTROL_P",
+      "dfquery": "select * from $firmdb.STG.ETL_JOB_CONTROL where job_name='INGEST_TRM_PRACTICE_PERSON_TOPIC_GLUE_FULL'",
+      "procquery": "call $firmdb.STG.UPDATE_ETL_JOB_CONTROL_P('$firmdb','INGEST_TRM_PRACTICE_PERSON_TOPIC_GLUE_FULL',{0},{1})"
+    }
+  },
+  "Source2Target": {
+    "sources": {
+      "ksr": {
+        "trm.practice_person_topic": {
+          "sourcedatabase": "postgres",
+          "sourceschema": "TRM",
+          "sourcetable": "TRM.PRACTICE_PERSON_TOPIC",
+          "sourcequery": "select * from TRM.PRACTICE_PERSON_TOPIC",
+          "load_type": "Full",
+          "jdbcUrl": "$ksrtrmjdbcurl",
+          "jdbcdriverpath": "s3://$gluebucket/Jar/postgresql.jar",
+          "connectionProperties": {
+            "secretname": "$ksrtrmsecret",
+            "driver": "org.postgresql.Driver"
+          }}}},
+    "targets": {
+      "s3": {
+  
+        "trm.practice_person_topic": {
+          "target_bucket_name": "$peoplebucket",
+          "target_key_name": "ksr/full/trm/practice_person_topic/",
+          "target_partition_by": null,
+          "target_write_mode": "overwrite",
+          "target_file_format": "parquet",
+          "writer_spark_options": {
+            "target_compression_type": "snappy"
+          }
+        }
+     }
+    }
+  }}

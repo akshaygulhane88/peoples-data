@@ -1,0 +1,36 @@
+jobs:
+  INGEST_RDBMS_S3_GLUE:
+    source: scripts/INGEST_RDBMS_S3_GLUE.py
+    glue_version: "3.0"
+    max_retries: 0
+    #security_configuration: default-glue-security-config
+    worker_type: "G.2X"
+    timeout: 300
+    bucket: cdp-data-glue-<accid>-<region>-<env>
+    default_arguments:
+      --additional-python-modules: s3://cdp-data-glue-<accid>-<region>-<env>/pkg/CDP_Common_Reusable_Framework-2.0-py3-none-any.whl
+      --config_bucket: cdp-data-glue-<accid>-<region>-<env>
+      --config_key: config/ingest/config_ingest_gotskills_glue_full.json
+      --environment: <env>
+      --extra-jars: s3://cdp-data-glue-<accid>-<region>-<env>/Jar/spark-snowflake.jar,s3://cdp-data-glue-<accid>-<region>-<env>/Jar/snowflake-jdbc.jar,s3://cdp-data-glue-<accid>-<region>-<env>/Jar/elasticsearch-spark.jar
+      --job-bookmark-option: job-bookmark-disable
+      --enable-auto-scaling: 'true'
+    dev:
+      max_concurrent_runs: 100
+      number_of_workers: 5
+      connections: [sub-add-duse1-cdp-dev-01-v2-compute-c]
+    qa:
+      max_concurrent_runs: 100
+      number_of_workers: 5
+      connections: [sub-add-tuse1-cdp-test-01-v2-compute-c]
+    prod:
+      max_concurrent_runs: 100
+      number_of_workers: 5
+      connections: [sub-add-puse1-cdp-prod-01-v2-compute-c]
+
+deps:
+  config_ingest_person_expertise_glue_full.json:
+    source_dir: config
+    source_pattern: config_ingest_person_expertise_glue_full.json
+    bucket_folder: config
+    bucket: cdp-data-glue-<accid>-<region>-<env>

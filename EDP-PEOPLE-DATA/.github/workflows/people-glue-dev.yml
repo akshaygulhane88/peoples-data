@@ -1,0 +1,341 @@
+# This is a generated workflow and can be _overwritten_ without notice
+name: people-glue-dev
+
+env:
+  WF: '{"branches": ["prod"], "env": {"ARTIFACTORY_PASS": "${{ secrets.ARTIFACTORY_PASS }}", "ARTIFACTORY_USER": "${{ secrets.ARTIFACTORY_USER }}", "GHUB_TOKEN": "${{ secrets.GHUB_TOKEN }}", "GITHUB_WSPACE": "${{ github.workspace }}", "MAVEN_AUTH_URL": "https://${{ secrets.ARTIFACTORY_USER }}:${{ secrets.ARTIFACTORY_PASS }}@mckinsey.jfrog.io/artifactory/maven", "MAVEN_CDP_URL": "https://mckinsey.jfrog.io/artifactory/cdp-maven", "MAVEN_URL": "https://mckinsey.jfrog.io/artifactory/maven", "PIP_AUTH_URL": "https://${{ secrets.ARTIFACTORY_USER }}:${{ secrets.ARTIFACTORY_PASS }}@mckinsey.jfrog.io/artifactory/api/pypi/python/simple", "TF_BACKEND_ACCID": 566784721172, "TF_BACKEND_BUCKET": "cdp-tfstate", "TF_BACKEND_LOCK_TABLE": "cdp-tfstate-lock", "TF_BACKEND_PROFILE": "deploy", "TF_BACKEND_REGION": "us-east-1", "TF_BACKEND_STATE_KEY": "glue", "TF_CLONE_BRANCH": "main", "TF_READ_ROLE": "cdp-terraform-read", "TF_ROLE": "cdp-terraform-yaml", "TF_STATE_ROLE": "cdp-terraform-backend", "TF_VAR_region": "us-east-1", "UPLOADS_CDP_URL": "https://${{ secrets.ARTIFACTORY_USER_NEW }}:${{ secrets.ARTIFACTORY_PASS_NEW }}@mckinsey.jfrog.io/artifactory/cdp-uploads-generic-local"}, "envrs": {"dev": {"act_run_on_pr": false, "allow_runs_from_branches": ["dev"], "dry_run": true, "dry_run_on_push": false, "env": {"TF_IMPORT": true, "TF_VAR_accid": 849242744489, "TF_VAR_env": "dev"}, "trigger_run_on_branches": ["dev"], "trigger_run_on_pr_to_branches": ["dev"]}, "prod": {"act_run_on_pr": false, "allow_runs_from_branches": ["prod"], "dry_run": true, "dry_run_on_push": false, "env": {"TF_IMPORT": true, "TF_VAR_accid": 596125291709, "TF_VAR_env": "prod"}, "if_input": "ack", "manual_inputs": "inputs:\n  ack:\n    type: boolean\n    required: true\n    description: \"By checking this you aknowledge that you filled in the necessary data about the deployed change here: https://mckinsey.ent.box.com/file/1369083020518\"\n", "trigger_run_on_branches": [], "trigger_run_on_pr_to_branches": ["prod"]}, "qa": {"act_run_on_pr": false, "allow_runs_from_branches": ["qa"], "dry_run": true, "dry_run_on_push": false, "env": {"TF_IMPORT": true, "TF_VAR_accid": 648624564125, "TF_VAR_env": "qa"}, "trigger_run_on_branches": ["qa"], "trigger_run_on_pr_to_branches": ["qa"]}}, "id": "people-glue", "trigger_paths": ["people/glue/**"], "wf": "tfyml", "working_dir": "people/glue"}'
+  REPOID: dhfdw
+  ENVR: dev
+  ARTIFACTORY_PASS: "${{ secrets.ARTIFACTORY_PASS }}"
+  ARTIFACTORY_USER: "${{ secrets.ARTIFACTORY_USER }}"
+  GHUB_TOKEN: "${{ secrets.GHUB_TOKEN }}"
+  GITHUB_WSPACE: "${{ github.workspace }}"
+  MAVEN_AUTH_URL: "https://${{ secrets.ARTIFACTORY_USER }}:${{ secrets.ARTIFACTORY_PASS }}@mckinsey.jfrog.io/artifactory/maven"
+  MAVEN_CDP_URL: "https://mckinsey.jfrog.io/artifactory/cdp-maven"
+  MAVEN_URL: "https://mckinsey.jfrog.io/artifactory/maven"
+  PIP_AUTH_URL: "https://${{ secrets.ARTIFACTORY_USER }}:${{ secrets.ARTIFACTORY_PASS }}@mckinsey.jfrog.io/artifactory/api/pypi/python/simple"
+  TF_BACKEND_ACCID: "566784721172"
+  TF_BACKEND_BUCKET: "cdp-tfstate"
+  TF_BACKEND_LOCK_TABLE: "cdp-tfstate-lock"
+  TF_BACKEND_PROFILE: "deploy"
+  TF_BACKEND_REGION: "us-east-1"
+  TF_BACKEND_STATE_KEY: "glue"
+  TF_CLONE_BRANCH: "main"
+  TF_READ_ROLE: "cdp-terraform-read"
+  TF_ROLE: "cdp-terraform-yaml"
+  TF_STATE_ROLE: "cdp-terraform-backend"
+  TF_VAR_region: "us-east-1"
+  UPLOADS_CDP_URL: "https://${{ secrets.ARTIFACTORY_USER_NEW }}:${{ secrets.ARTIFACTORY_PASS_NEW }}@mckinsey.jfrog.io/artifactory/cdp-uploads-generic-local"
+  TF_IMPORT: "True"
+  TF_VAR_accid: "849242744489"
+  TF_VAR_env: "dev"
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "people/glue/**"
+    branches:
+      - dev
+  pull_request:
+    paths:
+      - "people/glue/**"
+    branches:
+      - dev
+
+jobs:
+  people-glue-dev-dryrun:
+    if: github.event_name != 'push' || 'False' == 'True' || '' == 'True'
+    permissions: write-all
+    runs-on: ubuntu-latest
+    container:
+      image: mckinsey-cdp-docker.jfrog.io/cdp-github-image
+      credentials:
+        username: ${{ secrets.ARTIFACTORY_USER }}
+        password: ${{ secrets.ARTIFACTORY_PASS }}
+      options: "--user root"
+    defaults:
+      run:
+        working-directory: ${{ fromJSON(env.WF)['working_dir'] }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+            fetch-depth: 0
+            token: ${{ secrets.GHUB_TOKEN }}
+
+      - name: Init
+        shell: bash
+        run : |
+          echo Actor: ${{ github.actor }}
+          echo "DRY_RUN=yes" >> $GITHUB_ENV
+          # [[ "${{ github.event.inputs.dry-run }}" == "true" ]] && { echo "DRY_RUN=yes" >> $GITHUB_ENV; } || { echo "DRY_RUN=no" >> $GITHUB_ENV; }
+          git config --global url."https://${{ secrets.GHUB_TOKEN }}@github.com".insteadOf https://github.com
+          git config --global --add safe.directory /__w/${GITHUB_REPOSITORY#*/}/${GITHUB_REPOSITORY#*/}
+          wget --header='Authorization: token ${{ secrets.GHUB_TOKEN }}' \
+            https://raw.githubusercontent.com/McK-Internal/CDP-DevOps/main/tf/devops/ghub/wflows/scripts/wflow.py
+
+      - name: Check
+        shell: bash
+        env:
+          REPO: ${{ github.repository }}
+          WFLOW: ${{ github.workflow }}
+          SHA: ${{ github.sha }}
+          REF: ${{ github.ref }}
+          WF: ${{ env.WF }}
+          REF_NAME: ${{ github.ref_name }}
+          GHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
+        run: |
+          python3 wflow.py check
+
+      - name: tfyml download
+        shell: bash
+        run: |
+          wget --header='Authorization: token ${{ secrets.GHUB_TOKEN }}' \
+            https://raw.githubusercontent.com/McK-Internal/CDP-DevOps/${TF_CLONE_BRANCH}/tf/devops/ghub/wflows/scripts/tfyml.{py,tf}
+
+      - name: Configure AWS credentials for tfstate account
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ env.TF_BACKEND_ACCID }}:role/${{ env.TF_STATE_ROLE }}
+          aws-region: ${{ env.TF_VAR_region }}
+
+      - name: Write state AWS profile
+        shell: bash
+        run: |
+          mkdir -p ~/.aws
+          echo "[$TF_BACKEND_PROFILE]" > ~/.aws/credentials
+          echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
+          echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
+          echo "aws_session_token = $AWS_SESSION_TOKEN" >> ~/.aws/credentials
+          echo "AWS_ACCESS_KEY_ID=" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=" >> $GITHUB_ENV
+          echo "AWS_SESSION_TOKEN=" >> $GITHUB_ENV
+
+      - name: Set AWS profile / Terraform workspace
+        shell: bash
+        run: |
+          id=${{ fromJSON(env.WF)['id'] }}
+          if [[ "$id" == *"-"* ]]; then
+            area=${id%-*}
+            echo "TF_WSPACE=${{ env.REPOID }}-${area}-${{ env.ENVR }}" >> $GITHUB_ENV
+          else
+            echo "TF_WSPACE=${{ env.REPOID }}-${{ env.ENVR }}" >> $GITHUB_ENV
+          fi
+
+      - name: Terraform init
+        shell: bash
+        run: |
+          terraform init \
+            -backend-config="bucket=$TF_BACKEND_BUCKET" \
+            -backend-config="dynamodb_table=$TF_BACKEND_LOCK_TABLE" \
+            -backend-config="key=$TF_BACKEND_STATE_KEY" \
+            -backend-config="region=$TF_BACKEND_REGION" \
+            -backend-config="profile=$TF_BACKEND_PROFILE"
+
+      - name: Terraform workspace
+        shell: bash
+        run: |
+          terraform workspace select ${{ env.TF_WSPACE }} || terraform workspace new ${{ env.TF_WSPACE }}
+
+      - name: Configure AWS credentials for target account
+        if: env.DRY_RUN == 'yes'
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ env.TF_VAR_accid }}:role/${{ env.TF_READ_ROLE }}
+          aws-region: ${{ env.TF_VAR_region }}
+
+      - name: Configure AWS credentials for target account
+        if: env.DRY_RUN != 'yes'
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ env.TF_VAR_accid }}:role/${{ env.TF_ROLE }}
+          aws-region: ${{ env.TF_VAR_region }}
+
+      - name: Write target AWS profile
+        shell: bash
+        run: |
+          echo "[${{ env.TF_WSPACE }}]" >> ~/.aws/credentials
+          echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
+          echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
+          echo "aws_session_token = $AWS_SESSION_TOKEN" >> ~/.aws/credentials
+          echo "AWS_ACCESS_KEY_ID=" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=" >> $GITHUB_ENV
+          echo "AWS_SESSION_TOKEN=" >> $GITHUB_ENV
+
+      - name: Terraform validate
+        shell: bash
+        run: terraform validate
+
+      - name: tfyml assemble & build & import
+        shell: bash
+        run: |
+          python3 tfyml.py
+
+      - name: Terraform plan
+        if: env.DRY_RUN == 'yes'
+        shell: bash
+        run: |
+            terraform plan -parallelism=50 -compact-warnings
+
+      - name: Terraform apply
+        if: env.DRY_RUN != 'yes'
+        shell: bash
+        run: |
+          terraform apply -parallelism=50 -compact-warnings -auto-approve
+
+      - name: End
+        env:
+          REPO: ${{ github.repository }}
+          WFLOW: ${{ github.workflow }}
+          SHA: ${{ github.sha }}
+        run: |
+          python3 wflow.py end
+  people-glue-dev:
+    environment: dev
+    needs: [people-glue-dev-dryrun]
+    if: (github.event_name != 'pull_request' || 'False' == 'True' || '' == 'True' || (github.event_name == 'push' && 'False' != 'True' && '' != 'True' && always()))
+    permissions: write-all
+    runs-on: ubuntu-latest
+    container:
+      image: mckinsey-cdp-docker.jfrog.io/cdp-github-image
+      credentials:
+        username: ${{ secrets.ARTIFACTORY_USER }}
+        password: ${{ secrets.ARTIFACTORY_PASS }}
+      options: "--user root"
+    defaults:
+      run:
+        working-directory: ${{ fromJSON(env.WF)['working_dir'] }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+            fetch-depth: 0
+            token: ${{ secrets.GHUB_TOKEN }}
+
+      - name: Init
+        shell: bash
+        run : |
+          echo Actor: ${{ github.actor }}
+          echo "DRY_RUN=no" >> $GITHUB_ENV
+          # [[ "${{ github.event.inputs.dry-run }}" == "true" ]] && { echo "DRY_RUN=yes" >> $GITHUB_ENV; } || { echo "DRY_RUN=no" >> $GITHUB_ENV; }
+          git config --global url."https://${{ secrets.GHUB_TOKEN }}@github.com".insteadOf https://github.com
+          git config --global --add safe.directory /__w/${GITHUB_REPOSITORY#*/}/${GITHUB_REPOSITORY#*/}
+          wget --header='Authorization: token ${{ secrets.GHUB_TOKEN }}' \
+            https://raw.githubusercontent.com/McK-Internal/CDP-DevOps/main/tf/devops/ghub/wflows/scripts/wflow.py
+
+      - name: Check
+        shell: bash
+        env:
+          REPO: ${{ github.repository }}
+          WFLOW: ${{ github.workflow }}
+          SHA: ${{ github.sha }}
+          REF: ${{ github.ref }}
+          WF: ${{ env.WF }}
+          REF_NAME: ${{ github.ref_name }}
+          GHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
+        run: |
+          python3 wflow.py check
+
+      - name: tfyml download
+        shell: bash
+        run: |
+          wget --header='Authorization: token ${{ secrets.GHUB_TOKEN }}' \
+            https://raw.githubusercontent.com/McK-Internal/CDP-DevOps/${TF_CLONE_BRANCH}/tf/devops/ghub/wflows/scripts/tfyml.{py,tf}
+
+      - name: Configure AWS credentials for tfstate account
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ env.TF_BACKEND_ACCID }}:role/${{ env.TF_STATE_ROLE }}
+          aws-region: ${{ env.TF_VAR_region }}
+
+      - name: Write state AWS profile
+        shell: bash
+        run: |
+          mkdir -p ~/.aws
+          echo "[$TF_BACKEND_PROFILE]" > ~/.aws/credentials
+          echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
+          echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
+          echo "aws_session_token = $AWS_SESSION_TOKEN" >> ~/.aws/credentials
+          echo "AWS_ACCESS_KEY_ID=" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=" >> $GITHUB_ENV
+          echo "AWS_SESSION_TOKEN=" >> $GITHUB_ENV
+
+      - name: Set AWS profile / Terraform workspace
+        shell: bash
+        run: |
+          id=${{ fromJSON(env.WF)['id'] }}
+          if [[ "$id" == *"-"* ]]; then
+            area=${id%-*}
+            echo "TF_WSPACE=${{ env.REPOID }}-${area}-${{ env.ENVR }}" >> $GITHUB_ENV
+          else
+            echo "TF_WSPACE=${{ env.REPOID }}-${{ env.ENVR }}" >> $GITHUB_ENV
+          fi
+
+      - name: Terraform init
+        shell: bash
+        run: |
+          terraform init \
+            -backend-config="bucket=$TF_BACKEND_BUCKET" \
+            -backend-config="dynamodb_table=$TF_BACKEND_LOCK_TABLE" \
+            -backend-config="key=$TF_BACKEND_STATE_KEY" \
+            -backend-config="region=$TF_BACKEND_REGION" \
+            -backend-config="profile=$TF_BACKEND_PROFILE"
+
+      - name: Terraform workspace
+        shell: bash
+        run: |
+          terraform workspace select ${{ env.TF_WSPACE }} || terraform workspace new ${{ env.TF_WSPACE }}
+
+      - name: Configure AWS credentials for target account
+        if: env.DRY_RUN == 'yes'
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ env.TF_VAR_accid }}:role/${{ env.TF_READ_ROLE }}
+          aws-region: ${{ env.TF_VAR_region }}
+
+      - name: Configure AWS credentials for target account
+        if: env.DRY_RUN != 'yes'
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ env.TF_VAR_accid }}:role/${{ env.TF_ROLE }}
+          aws-region: ${{ env.TF_VAR_region }}
+
+      - name: Write target AWS profile
+        shell: bash
+        run: |
+          echo "[${{ env.TF_WSPACE }}]" >> ~/.aws/credentials
+          echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
+          echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
+          echo "aws_session_token = $AWS_SESSION_TOKEN" >> ~/.aws/credentials
+          echo "AWS_ACCESS_KEY_ID=" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=" >> $GITHUB_ENV
+          echo "AWS_SESSION_TOKEN=" >> $GITHUB_ENV
+
+      - name: Terraform validate
+        shell: bash
+        run: terraform validate
+
+      - name: tfyml assemble & build & import
+        shell: bash
+        run: |
+          python3 tfyml.py
+
+      - name: Terraform plan
+        if: env.DRY_RUN == 'yes'
+        shell: bash
+        run: |
+            terraform plan -parallelism=50 -compact-warnings
+
+      - name: Terraform apply
+        if: env.DRY_RUN != 'yes'
+        shell: bash
+        run: |
+          terraform apply -parallelism=50 -compact-warnings -auto-approve
+
+      - name: End
+        env:
+          REPO: ${{ github.repository }}
+          WFLOW: ${{ github.workflow }}
+          SHA: ${{ github.sha }}
+        run: |
+          python3 wflow.py end

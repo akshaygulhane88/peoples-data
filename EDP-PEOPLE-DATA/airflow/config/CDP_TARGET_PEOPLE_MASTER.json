@@ -1,0 +1,120 @@
+{
+  "global": {
+    "email": [
+      "cdp_t1_&_ews@mckinsey.com"
+    ],
+    "email_on_failure": "True",
+    "email_on_retry": "False",
+    "schedule_interval": "50 */3 * * *",
+    "start_date": "2022-05-18 11:15",
+    "region_name": "us-east-1",
+    "max_active_runs": 1,
+    "concurrency": 20
+  },
+  "default": {
+    "default_args": {
+      "owner": "CDP T1",
+      "catchup": "False",
+      "retries": "0",
+      "concurrency": 1
+    }
+  },
+  "environment": {
+    "dev": {
+      "dynamic_vars": {
+        "$peopledb": "ENT_PEOPLE_DEV_DB",
+        "$firmdb": "ENT_FIRM_DEV_DB",
+        "$env": "DEV",
+        "$dq_trigger_bucket": "cdp-data-people-849242744489-us-east-1-dev",
+        "$cdp_trigger_key": "dq/trigger_file/cdp",
+        "$cdb_trigger_key": "dq/trigger_file/cdb",
+        "$dq_trigger_target_load_key": "dq/trigger_file/cdp_target_load",
+        "$acc_id": "849242744489",
+        "$date": "16-Jan-2021",
+        "$region_name": "us-east-1"
+      }
+    },
+    "qa": {
+      "dynamic_vars": {
+        "$peopledb": "ENT_PEOPLE_QA_DB",
+        "$firmdb": "ENT_FIRM_QA_DB",
+        "$env": "QA",
+        "$dq_trigger_bucket": "cdp-data-people-648624564125-us-east-1-qa",
+        "$cdp_trigger_key": "dq/trigger_file/cdp",
+        "$cdb_trigger_key": "dq/trigger_file/cdb",
+        "$dq_trigger_target_load_key": "dq/trigger_file/cdp_target_load",
+        "$acc_id": "648624564125",
+        "$date": "16-Jan-2021",
+        "$region_name": "us-east-1"
+      }
+    },
+    "prod": {
+      "dynamic_vars": {
+        "$peopledb": "ENT_PEOPLE_PROD_DB",
+        "$firmdb": "ENT_FIRM_PROD_DB",
+        "$env": "PROD",
+        "$dq_trigger_bucket": "cdp-data-people-596125291709-us-east-1-prod",
+        "$cdp_trigger_key": "dq/trigger_file/cdp",
+        "$cdb_trigger_key": "dq/trigger_file/cdb",
+        "$dq_trigger_target_load_key": "dq/trigger_file/cdp_target_load",
+        "$acc_id": "596125291709",
+        "$date": "16-Jan-2021",
+        "$region_name": "us-east-1"
+      }
+    }
+  },
+  "dag": {
+    "dag_id": "CDP_TARGET_PEOPLE_MASTER",
+    "name": "CDP_TARGET_PEOPLE_MASTER",
+    "owner": "CDP T1",
+    "description": "This DAG is E2E DAG for PEOPLE Load",
+    "dag_parameters": {
+      "dq_trigger_config_bucket": "$dq_trigger_bucket"
+    },
+    "dag_dataset_lookup": [
+      "s3://$dq_trigger_bucket/COMPLETED_CDP_REFERENCE_LKP_MASTER_LOAD.txt"
+    ],
+    "task_groups": [
+      {
+        "name": "PER_EXPERTISE_TOPIC",
+        "tooltip": "This is task group for TASK_GROUP_PER_EXPERTISE_TOPIC flow",
+        "Sequence": [
+          "STAGING_PERSON_EXPERTISE_TOPIC_STG_GLUE",
+          "TRANSFORM_ED_PERSON_EXPERTISE_TOPIC_D_GLUE"
+        ],
+        "tasks": [
+          {
+            "task_id": "STAGING_PERSON_EXPERTISE_TOPIC_STG_GLUE",
+            "job_name": "STAGING_PERSON_EXPERTISE_TOPIC_STG_GLUE",
+            "job_desc": "triggering glue job STAGING_PERSON_EXPERTISE_TOPIC_STG_GLUE",
+            "operator": "AwsGlueJobOperator",
+            "script_args": {
+              "config_bucket": "cdp-data-glue-$acc_id-$region_name-$env"
+            },
+            "region_name": "us-east-1",
+            "trigger_rule": "TriggerRule.ALL_SUCCESS"
+          },
+          {
+            "task_id": "TRANSFORM_ED_PERSON_EXPERTISE_TOPIC_D_GLUE",
+            "job_name": "TRANSFORM_ED_PERSON_EXPERTISE_TOPIC_D_GLUE",
+            "job_desc": "triggering glue job TRANSFORM_ED_PERSON_EXPERTISE_TOPIC_D_GLUE",
+            "operator": "AwsGlueJobOperator",
+            "script_args": {
+              "config_bucket": "cdp-data-glue-$acc_id-$region_name-$env"
+            },
+            "region_name": "us-east-1",
+            "trigger_rule": "TriggerRule.ALL_SUCCESS"
+          }
+        ]
+      }
+    ],
+    "sequence": [
+      "start",
+      [
+        "PER_EXPERTISE_TOPIC"
+      ],
+      "GENERATE_DAG_COMPLETION_DATASETS",
+      "end"
+    ]
+  }
+}

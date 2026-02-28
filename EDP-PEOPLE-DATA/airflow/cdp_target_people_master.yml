@@ -1,0 +1,5 @@
+dags: 
+  CDP_TARGET_PEOPLE_MASTER.py:
+    source_dir: "dags"
+    source_pattern: CDP_TARGET_PEOPLE_MASTER.py
+

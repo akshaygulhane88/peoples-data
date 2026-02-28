@@ -1,0 +1,135 @@
+
+{
+	"global": {
+		"snowflake_source_name": "net.snowflake.spark.snowflake",
+		"s3_client_name": "s3",
+		"json_decode": "utf-8"
+	},
+	"environment": {
+		"dev":{
+		"snowflake_db_secret_name": "cdp-fdw-snowflake-dev",
+         "database": "ENT_PEOPLE_DEV_DB",
+		"role": "ENT_PEOPLE_OWNER_DEV_ROLE",
+		"dynamic_vars":{"$peopledb":"ENT_PEOPLE_DEV_DB","$firmdb":"ENT_FIRM_DEV_DB","$firmrole":"ENT_FIRM_OWNER_DEV_ROLE","$peoplerole":"ENT_PEOPLE_OWNER_DEV_ROLE"}
+		},
+		"qa":{
+		"snowflake_db_secret_name": "cdp-fdw-snowflake-qa",
+		"database": "ENT_PEOPLE_QA_DB",
+		"role": "ENT_PEOPLE_OWNER_QA_ROLE",
+		"dynamic_vars":{"$peopledb":"ENT_PEOPLE_QA_DB","$firmdb":"ENT_FIRM_QA_DB","$firmrole":"ENT_FIRM_OWNER_QA_ROLE","$peoplerole":"ENT_PEOPLE_OWNER_QA_ROLE"}
+		},
+		"prod":{
+		"snowflake_db_secret_name": "cdp-fdw-snowflake-prod",
+		"database": "ENT_PEOPLE_PROD_DB",
+		"role": "ENT_PEOPLE_OWNER_PROD_ROLE",
+		"dynamic_vars":{"$peopledb":"ENT_PEOPLE_PROD_DB","$firmdb":"ENT_FIRM_PROD_DB","$firmrole":"ENT_FIRM_OWNER_PROD_ROLE","$peoplerole":"ENT_PEOPLE_OWNER_PROD_ROLE"}
+		}
+	},
+	"job": {
+		"name": "STAGING_PERSON_EXPERTISE_TOPIC_STG_GLUE",
+		"environment": "dev",
+		"spark_options": [
+			"set spark.sql.legacy.timeParserPolicy=LEGACY",
+			"set spark.sql.ansi.enabled=True",
+			"set spark.sql.storeAssignmentPolicy=ANSI"
+		]
+	},
+	 "control":{
+		"name": "ETL_JOB_CONTROL",
+		"type": "snowflake",
+		"connection":{
+		"sfdatabase": "$firmdb",
+		"sfrole": "$firmrole"
+		},
+		"schema": "STG",
+		"snowflake_source_name": "net.snowflake.spark.snowflake",
+		"procname":"UPDATE_ETL_JOB_CONTROL_P",
+		"dfquery": "select * from $firmdb.STG.ETL_JOB_CONTROL where job_name='STAGING_PERSON_EXPERTISE_TOPIC_STG_GLUE'",
+		"procquery": "call $firmdb.STG.UPDATE_ETL_JOB_CONTROL_P('$firmdb','STAGING_PERSON_EXPERTISE_TOPIC_STG_GLUE',{0},{1})"
+	},
+	"stages": [
+		{
+			"merge_load_view_to_stg": {
+				"sources": [
+					{
+						"type": "snowflake",
+						"database": "$peopledb",
+						"role": "$peoplerole",
+						"schema": "LOAD",
+						"tmp_vw_query_map": [],
+						"tmp_vw_table_map": [{
+								"PERSON_TOPIC": [
+									false,
+									"$peopledb.LOAD.TRM_PRACTICE_PERSON_TOPIC_FULL_EXT_V"
+								]
+							},
+							{
+								"PERSON": [
+									false,
+									"$peopledb.LOAD.TRM_PRACTICE_PERSON_EXT_V"
+								]
+							},
+							{
+								"TOPIC": [
+									false,
+									"$firmdb.LOAD.TRM_TOPIC_EXT_V"
+								]
+							},
+							{
+								"LINKAGE": [
+									false,
+									"$firmdb.DATA.ED_PRACTICE_TAXONOMY_LINKAGE"
+								]
+							},
+							{
+								"TAXONOMY": [
+									false,
+									"$firmdb.DATA.TAXONOMY_REF"
+								]
+							}
+						]
+					}
+				],
+				"targets": [
+					{
+						"name": "PERSON_EXPERTISE_TOPIC_STG_TMP",
+						"table": "PERSON_EXPERTISE_TOPIC_STG_TMP",
+						"type": "snowflake",
+						"database": "$peopledb",
+						"role": "$peoplerole",
+						"schema": "TEMP",
+						"write_mode": "overwrite",
+						"truncate_table": "on",
+						"usesstagingtable": "off"
+					}
+				]
+			}
+		},
+		{
+			"merger_temp_table_to_target": {
+				"sources": [
+					{
+						"name": "PERSON_EXPERTISE_TOPIC_STG_TMP",
+						"type": "snowflake",
+						"role": "$peoplerole",
+						"database": "$peopledb",
+						"schema": "TEMP",
+						"table": "PERSON_EXPERTISE_TOPIC_STG_TMP"
+					}
+				],
+				"targets": [
+					{
+						"name": "PERSON_EXPERTISE_TOPIC_STG",
+						"type": "snowflake",
+						"database": "$peopledb",
+						"role": "$peoplerole",
+						"write_mode": "append",
+						"schema": "STG",
+						"truncate_table": "off",
+						"usesstagingtable": "off"
+					}
+				]
+			}
+		}		
+	]
+}

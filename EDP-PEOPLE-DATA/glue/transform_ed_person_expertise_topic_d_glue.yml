@@ -1,0 +1,35 @@
+jobs:
+  TRANSFORM_ED_PERSON_EXPERTISE_TOPIC_D_GLUE:
+    source: scripts/TRANSFORM_ED_PERSON_EXPERTISE_TOPIC_D_GLUE.py
+    #connections: [sub-add-duse1-cdp-<env>-01-v2-compute-c]
+    glue_version: "3.0"
+    max_retries: 0
+    #security_configuration: default-glue-security-config
+    bucket: cdp-data-glue-<accid>-<region>-<env>
+    default_arguments:
+      --additional-python-modules: s3://cdp-data-glue-<accid>-<region>-<env>/pkg/CDP_Common_Reusable_Framework-2.0-py3-none-any.whl
+      --config_bucket: cdp-data-glue-<accid>-<region>-<env>
+      --config_key: config/transform/config_transform_ed_person_expertise_topic_d_glue.json
+      --environment: <env>
+      --extra-jars: s3://cdp-data-glue-<accid>-<region>-<env>/Jar/spark-snowflake.jar,s3://cdp-data-glue-<accid>-<region>-<env>/Jar/snowflake-jdbc.jar,s3://cdp-data-glue-<accid>-<region>-<env>/Jar/elasticsearch-spark.jar
+      --job-bookmark-option: job-bookmark-disable
+    dev:
+      max_concurrent_runs: 2
+      number_of_workers: 2
+      connections: [sub-add-duse1-cdp-dev-01-v2-compute-c]
+    qa:
+      max_concurrent_runs: 2
+      number_of_workers: 4
+      connections: [sub-add-tuse1-cdp-test-01-v2-compute-c]
+    prod:
+      max_concurrent_runs: 2
+      number_of_workers: 4
+      connections: [sub-add-puse1-cdp-prod-01-v2-compute-c]
+
+deps:
+  config_transform_ed_person_expertise_topic_d_glue.json:
+    source_dir: config/transform
+    source_pattern: config_transform_ed_person_expertise_topic_d_glue.json
+    bucket_folder: config/transform
+    bucket: cdp-data-glue-<accid>-<region>-<env>
+  
